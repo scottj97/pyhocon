@@ -263,6 +263,10 @@ class ConfigParser(object):
             except ValueError:
                 return float(n)
 
+        def convert_hex(tokens):
+            n = tokens[0]
+            return int(n, 16)
+
         def convert_period(tokens):
 
             period_value = int(tokens.value)
@@ -363,6 +367,8 @@ class ConfigParser(object):
             comment_no_comma_eol = (comment | eol).suppress()
             number_expr = Regex(r'[+-]?(\d*\.\d+|\d+(\.\d+)?)([eE][+\-]?\d+)?(?=$|[ \t]*([\$\}\],#\n\r]|//))',
                                 re.DOTALL).setParseAction(convert_number)
+            hex_expr = Regex(r'0x([0-9a-fA-F]+)(?=$|[ \t]*([\$\}\],#\n\r]|//))',
+                                re.DOTALL).setParseAction(convert_hex)
 
             period_types = itertools.chain.from_iterable(cls.get_supported_period_type_map().values())
             period_expr = Regex(r'(?P<value>\d+)\s*(?P<unit>' + '|'.join(period_types) + ')$'
@@ -382,7 +388,7 @@ class ConfigParser(object):
             substitution_expr = Regex(r'[ \t]*\$\{[^\}]+\}[ \t]*').setParseAction(create_substitution)
             string_expr = multiline_string | quoted_string | unquoted_string
 
-            value_expr = period_expr | number_expr | true_expr | false_expr | null_expr | string_expr
+            value_expr = period_expr | number_expr | hex_expr | true_expr | false_expr | null_expr | string_expr
 
             include_content = (quoted_string | ((Keyword('url') | Keyword('file')) - Literal('(').suppress() - quoted_string - Literal(')').suppress()))
             include_expr = (
