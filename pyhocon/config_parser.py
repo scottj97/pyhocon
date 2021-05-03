@@ -750,9 +750,18 @@ class ListParser(TokenConverter):
         :param token_list:
         :return:
         """
-        cleaned_token_list = [token for tokens in (token.tokens if isinstance(token, ConfigInclude) else [token]
-                                                   for token in token_list if token != '')
-                              for token in tokens]
+        cleaned_token_list = []
+        for token in token_list:
+            if token == '':
+                # This is the case when there was a trailing comma in the list.
+                # The last token is just an empty string so we can safely ignore
+                # it.
+                continue
+            if isinstance(token, ConfigInclude):
+                cleaned_token_list.extend(token.tokens)
+            else:
+                cleaned_token_list.append(token)
+
         config_list = ConfigList(cleaned_token_list)
         return [config_list]
 
